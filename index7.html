@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Language Map Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f4f8;
+            color: #333;
+        }
+
+        header {
+            background-color: #4a90e2;
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .logo {
+            height: 40px;
+        }
+
+        .container {
+            padding: 30px 40px;
+        }
+
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: 500;
+        }
+
+        select, input[type="text"], button {
+            font-size: 16px;
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background-color: #4a90e2;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        .error {
+            color: #e74c3c;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+
+        .map-chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            height: 80vh;
+        }
+
+        .map-area {
+            flex: 4;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-area {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .barriers-box {
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #fffefc;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .barriers-box h3 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .barriers-box pre {
+            font-family: 'Segoe UI', sans-serif;
+            white-space: pre-wrap;
+            color: #555;
+        }
+
+        .placeholder-line {
+            height: 3px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background-color: #eee;
+            cursor: pointer;
+        }
+
+        .tab-button.active {
+            background-color: #4a90e2;
+            color: white;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌍 Language Mapping Tool</h1>
+        <img src="https://images-production.bookshop.org/spree/affiliate_profiles/banner_images/96872/original/SIL_Glyph_Logo_Andika_RGB.jpg?1693406499" alt="Logo" class="logo">
+    </header>
+
+    <div class="container">
+        <form method="POST">
+            <label for="input_type">Input Type:</label>
+            <select name="input_type" id="input_type">
+                <option value="language" selected>Language Code</option>
+                <option value="city">City</option>
+                <option value="country">Country</option>
+            </select>
+
+            <label for="input_value">Enter value:</label>
+            <input type="text" name="input_value" required>
+
+            <button type="submit">Submit</button>
+
+            {% if error %}
+                <div class="error">{{ error }}</div>
+            {% endif %}
+        </form>
+
+        {% if map_path or country_image %}
+        <div class="map-chart-container">
+            <div class="map-area">
+                {% if map_path %}
+                    <iframe src="{{ map_path }}"></iframe>
+                {% endif %}
+            </div>
+            <div class="chart-area">
+                {% if country_image %}
+                    <img src="data:image/png;base64,{{ country_image }}" style="max-width: 100%; border-radius: 12px;">
+                {% endif %}
+
+      
+                {% if cost_chart_html %}
+                    <div class="barriers-box">
+                        <h3>Translation Cost Breakdown</h3>
+                        <div>{{ cost_chart_html | safe }}</div>
+                        <div style="font-size: 16px; font-weight: bold; text-align: center; margin-top: 8px; color: #333;">
+                            Total Estimated Cost: {{ total_cost_str }}
+                        </div>
+                    </div>
+                {% endif %}
+
+
+
+
+                <div class="tabs">
+                    <button class="tab-button active" onclick="showTab('llm')">LLM Insights</button>
+                    <button class="tab-button" onclick="showTab('stats')">Insights</button>
+                </div>
+
+                <div id="llm" class="tab-content active">
+                    {% if barriers_info %}
+                        <div class="barriers-box">
+                            <h3>Barriers to Entry</h3>
+                            <pre>{{ barriers_info }}</pre>
+                        </div>
+                    {% else %}
+                        <div class="placeholder-line"></div>
+                    {% endif %}
+                </div>
+
+                <div id="stats" class="tab-content">
+                    <label for="analysis_type">Choose analysis:</label>
+                    <select id="analysis_type" onchange="runAnalysis(this.value)">
+                        <option value="">--Select--</option>
+                        <option value="top5">Top 5 Countries for Translation Focus</option>
+                        <option value="coverage">Translation Coverage Comparison</option>
+                        <option value="clustering">Clustering Evaluation</option>
+                        <option value="impact">Top 10 Countries by Population Impact</option>
+
+                    </select>
+                    <div id="analysis_result" style="margin-top: 15px;">
+                        <em>Select an analysis to view insights...</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function showTab(tab) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(div => div.classList.remove('active'));
+            document.querySelector('.tab-button[onclick="showTab(\'' + tab + '\')"]').classList.add('active');
+            document.getElementById(tab).classList.add('active');
+        }
+
+        function runAnalysis(type) {
+            if (!type) return;
+            const resultContainer = document.getElementById('analysis_result');
+            resultContainer.innerHTML = "<p><em>Loading...</em></p>";
+            fetch('/run-analysis?type=' + type)
+                .then(response => response.text())
+                .then(html => {
+                    resultContainer.innerHTML = html;
+                })
+                .catch(error => {
+                    resultContainer.innerHTML = "<p style='color: red;'>Error loading analysis.</p>";
+                    console.error(error);
+                });
+        }
+    </script>
+</body>
+</html>
