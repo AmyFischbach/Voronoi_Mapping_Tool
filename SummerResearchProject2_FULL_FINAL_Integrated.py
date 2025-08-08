@@ -1,3 +1,5 @@
+#Combined previous code with new flight/hotel code. May still need updates/ironing out
+
 import os
 import io
 import base64
